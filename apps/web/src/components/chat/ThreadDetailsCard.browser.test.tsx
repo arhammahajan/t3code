@@ -43,6 +43,8 @@ function Card({
   inline,
   fixture,
   rows = 1,
+  workspace = false,
+  active = true,
   automationRows = 0,
   serverOverflowRows = 0,
 }: {
@@ -51,6 +53,8 @@ function Card({
   fixture: ReturnType<typeof setup>;
   /** Rows of 100px shown at full density. Compact always takes 50px. */
   rows?: number;
+  workspace?: boolean;
+  active?: boolean;
   /** Rows of 100px in an automations list shown at full density. */
   automationRows?: number;
   /** Rows of 100px that expanded server lists add, which density ignores. */
@@ -60,23 +64,29 @@ function Card({
     // The web root renders in StrictMode, which re-runs ref callbacks on every mount.
     <StrictMode>
       <ChatCanvasContext
-        value={{
-          container,
-          lane: { padding: 48, minChatWidth: 640 },
-          layout: resolveChatCanvasLayout({ container, preview: null }),
-          previewKey: null,
-          registerTimeline: () => {},
-          measureDetailsCard: () => {},
-          detailsCardTopInset: 0,
-          preferredDetailsCard: placement,
-          detailsCardPlacement: inline ? placement : null,
-        }}
+        value={
+          workspace
+            ? null
+            : {
+                container,
+                lane: { padding: 48, minChatWidth: 640 },
+                layout: resolveChatCanvasLayout({ container, preview: null }),
+                previewKey: null,
+                registerTimeline: () => {},
+                measureDetailsCard: () => {},
+                detailsCardTopInset: 0,
+                preferredDetailsCard: placement,
+                detailsCardPlacement: inline ? placement : null,
+              }
+        }
       >
         <ThreadDetailsCard
           threadRef={threadRef}
           anchor={fixture.anchor}
           handle={fixture.handle}
           contentKey={String(rows)}
+          workspace={workspace}
+          active={active}
         >
           {(density) => (
             <>
@@ -195,4 +205,24 @@ it("stays full while expanded server rows overflow", async () => {
   await expect
     .element(page.getByRole("region", { name: "Thread details" }))
     .toHaveAttribute("data-density", "full");
+});
+
+it("keeps workspace controls in a full popover for the focused pane", async () => {
+  using fixture = setup();
+  await using screen = await render(
+    <Card threadRef={threadB} inline fixture={fixture} workspace rows={10} />,
+  );
+  await act(() => useRightPanelStore.getState().setThreadPanelOpen(threadB, "popover", true));
+  await expect.element(page.getByRole("dialog", { name: "Workspace controls" })).toBeVisible();
+  expect(document.querySelector('[data-thread-details-panel="inline"]')).toBeNull();
+  expect(
+    document.querySelector('[data-thread-details-panel="popover"]')?.getAttribute("data-density"),
+  ).toBe("full");
+  await screen.rerender(
+    <Card threadRef={threadB} inline fixture={fixture} workspace active={false} rows={10} />,
+  );
+  await expect
+    .element(page.getByRole("dialog", { name: "Workspace controls" }))
+    .not.toBeInTheDocument();
+  expect(popoverOpen(threadB)).toBe(true);
 });

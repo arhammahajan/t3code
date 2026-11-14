@@ -26,7 +26,11 @@ export function ThreadDetailsCard({
   contentKey,
   onContextMenu,
   children,
+  workspace = false,
+  active = true,
 }: {
+  workspace?: boolean;
+  active?: boolean;
   threadRef: ScopedThreadRef;
   anchor: RefObject<Element | null>;
   handle: ReturnType<typeof PopoverCreateHandle>;
@@ -35,12 +39,16 @@ export function ThreadDetailsCard({
   onContextMenu?: MouseEventHandler<HTMLDivElement>;
   children: (density: "full" | "compact" | "essential") => ReactNode;
 }) {
-  const detailsArea = workspaceAreaProps("details", 3, "Thread details");
+  const detailsArea = workspaceAreaProps(
+    "details",
+    3,
+    workspace ? "Workspace controls" : "Thread details",
+  );
   const canvas = useChatCanvas();
-  const preferredPlacement = canvas?.preferredDetailsCard ?? null;
-  const placement = canvas?.detailsCardPlacement ?? null;
+  const preferredPlacement = workspace ? null : (canvas?.preferredDetailsCard ?? null);
+  const placement = workspace ? null : (canvas?.detailsCardPlacement ?? null);
   const mode = placement ? "inline" : "popover";
-  const topInset = canvas?.detailsCardTopInset ?? 0;
+  const topInset = workspace ? 0 : (canvas?.detailsCardTopInset ?? 0);
   const inlineOpen = useRightPanelStore((state) =>
     selectThreadPanelOpen(state.threadPanelVisibilityByThreadKey, threadRef, "inline"),
   );
@@ -55,7 +63,7 @@ export function ThreadDetailsCard({
   const contentHeights =
     measurements.key === measurementKey ? measurements.heights : { full: 0, compact: 0 };
   const height = placement?.height ?? Math.max(0, (canvas?.container.height ?? 0) - 52);
-  const density = resolveThreadDetailsCardDensity(height, contentHeights);
+  const density = workspace ? "full" : resolveThreadDetailsCardDensity(height, contentHeights);
   const measureDetailsCard = canvas?.measureDetailsCard;
   const cardWidth = preferredPlacement?.width;
   // The mode derives from canvas measurements, the preview frame and the
@@ -115,7 +123,8 @@ export function ThreadDetailsCard({
   const card = (
     <div
       className={cn(
-        "dropdown-glass isolate contain-paint grid max-h-full grid-rows-[minmax(0,1fr)] overflow-hidden rounded-2xl",
+        "isolate contain-paint grid max-h-full grid-rows-[minmax(0,1fr)] overflow-hidden",
+        workspace ? "rounded-lg" : "dropdown-glass rounded-2xl",
         mode === "popover" &&
           "max-h-[min(calc(100dvh-6.5rem),calc(var(--available-height,100dvh)-1rem))]",
       )}
@@ -131,8 +140,9 @@ export function ThreadDetailsCard({
   return (
     <Popover
       handle={handle}
-      open={mode === "popover" && popoverOpen}
+      open={active && mode === "popover" && popoverOpen}
       onOpenChange={(open, details) => {
+        if (!active) return;
         const target =
           details.reason === "focus-out"
             ? (details.event as FocusEvent).relatedTarget
@@ -173,6 +183,7 @@ export function ThreadDetailsCard({
       <PopoverPopup
         {...(mode === "popover" ? detailsArea : {})}
         role="dialog"
+        aria-label={workspace ? "Workspace controls" : "Thread details"}
         data-workspace-focus-key={`details:${threadRef.environmentId}:${threadRef.threadId}`}
         initialFocus={() => {
           requestWorkspaceFocus({ area: "details" });
@@ -181,11 +192,12 @@ export function ThreadDetailsCard({
         anchor={anchor}
         align="end"
         // Account for the find panel's 8px card padding.
-        alignOffset={THREAD_DETAILS_CARD_GAP - 8}
+        alignOffset={workspace ? 0 : THREAD_DETAILS_CARD_GAP - 8}
         collisionAvoidance={{ side: "shift", align: "shift", fallbackAxisSide: "none" }}
         side="bottom"
-        sideOffset={topInset}
-        variant="panel"
+        sideOffset={workspace ? 8 : topInset}
+        variant={workspace ? "default" : "panel"}
+        width={workspace ? "md" : "auto"}
         padding="none"
       >
         {mode === "popover" ? (

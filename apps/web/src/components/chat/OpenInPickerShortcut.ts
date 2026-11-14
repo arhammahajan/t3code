@@ -46,12 +46,16 @@ export function useOpenFavoriteEditorShortcut({
   keybindings,
   availableEditors,
   openInCwd,
+  openInCwdIsFile = false,
+  revealFileManager = false,
 }: {
   enabled: boolean;
   environmentId: EnvironmentId;
   keybindings: ResolvedKeybindingsConfig;
   availableEditors: ReadonlyArray<EditorId>;
   openInCwd: string | null;
+  openInCwdIsFile?: boolean;
+  revealFileManager?: boolean;
 }) {
   const openInEditorMutation = useAtomCommand(shellEnvironment.openInEditor, "open in editor");
   const remote = useRemoteOpenState(environmentId);
@@ -80,6 +84,7 @@ export function useOpenFavoriteEditorShortcut({
           editor: preferredEditor,
           ...remote.host,
           absolutePath: openInCwd,
+          isFile: openInCwdIsFile,
         });
         if (url === undefined) return;
         void openRemoteEditorUrl(url).then((opened) => {
@@ -92,6 +97,7 @@ export function useOpenFavoriteEditorShortcut({
         input: {
           cwd: openInCwd,
           editor: preferredEditor,
+          ...(revealFileManager && preferredEditor === "file-manager" ? { reveal: true } : {}),
         },
       }).then((result) => {
         if (result._tag === "Success") announce(`Opened in ${label}`);
@@ -104,6 +110,8 @@ export function useOpenFavoriteEditorShortcut({
     environmentId,
     keybindings,
     openInCwd,
+    openInCwdIsFile,
+    revealFileManager,
     openInEditorMutation,
     preferredEditor,
     remote,

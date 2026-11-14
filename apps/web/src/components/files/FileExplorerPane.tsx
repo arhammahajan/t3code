@@ -15,6 +15,7 @@ const FILE_CONTENT_MIN_WIDTH = 256;
  */
 export function FileExplorerPane({
   resizable,
+  hidden = false,
   children,
   storageKey = "t3code.fileExplorerWidth",
   defaultWidth = 256,
@@ -23,6 +24,7 @@ export function FileExplorerPane({
   resizeLabel = "Resize file explorer",
 }: {
   resizable: boolean;
+  hidden?: boolean;
   children: ReactNode;
   storageKey?: string;
   defaultWidth?: number;
@@ -62,9 +64,13 @@ export function FileExplorerPane({
         return observeResize(row, measure);
       }}
       aria-label="File explorer"
+      aria-hidden={hidden || undefined}
+      inert={hidden}
+      data-workspace-dock="files"
       className={cn(
-        "relative flex min-h-0 min-w-0 shrink-0 bg-background",
-        resizable ? "border-l border-border/60" : "flex-1",
+        "relative flex min-h-0 min-w-0 shrink-0 bg-sidebar text-sidebar-foreground",
+        resizable ? "border-l border-sidebar-border/50" : "flex-1",
+        hidden && "hidden",
       )}
       style={
         resizable
@@ -77,6 +83,7 @@ export function FileExplorerPane({
     >
       {resizable ? (
         <RightPanelResizeHandle
+          onDoubleClick={() => setWidth(defaultWidth)}
           handlers={handlers}
           label={resizeLabel}
           tabIndex={0}

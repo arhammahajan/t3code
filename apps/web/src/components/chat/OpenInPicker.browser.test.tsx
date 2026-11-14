@@ -142,13 +142,15 @@ async function setup() {
     return event;
   }
 
-  function FavoriteEditorFallback() {
+  function FavoriteEditorFallback({ file = false, revealFileManager = false } = {}) {
     useOpenFavoriteEditorShortcut({
       enabled: true,
       environmentId: selected,
       keybindings: DEFAULT_RESOLVED_KEYBINDINGS,
-      availableEditors: editors,
-      openInCwd: "/work/project",
+      availableEditors: revealFileManager ? ["file-manager"] : editors,
+      openInCwd: file ? "/work/project/file.ts" : "/work/project",
+      openInCwdIsFile: file,
+      revealFileManager,
     });
     return null;
   }
@@ -201,6 +203,29 @@ describe("remote editor links", () => {
     expect((await pressOpenFavorite()).defaultPrevented).toBe(true);
     expect(state.openUrl).toHaveBeenCalledWith(expect.stringContaining("ssh-remote+sol"));
     expect(state.run).not.toHaveBeenCalled();
+
+    state.openUrl.mockResolvedValueOnce(false);
+    await act(async () => screen.rerender(<FavoriteEditorFallback file />));
+    await pressOpenFavorite();
+    expect(state.openUrl).toHaveBeenLastCalledWith(
+      expect.stringContaining("/work/project/file.ts:1:1"),
+    );
+  });
+});
+
+describe("file editor shortcut", () => {
+  it("reveals the selected file when the file manager is preferred", async () => {
+    await using fixture = await setup();
+    const { screen, pressOpenFavorite, FavoriteEditorFallback } = fixture;
+    state.allowed.add(selected);
+    await fixture.renderPicker(["file-manager"]);
+    state.run.mockResolvedValueOnce(AsyncResult.failure(Cause.fail(new Error("No editor"))));
+    await act(async () => screen.rerender(<FavoriteEditorFallback file revealFileManager />));
+    await pressOpenFavorite();
+    expect(state.run).toHaveBeenCalledWith({
+      environmentId: selected,
+      input: { cwd: "/work/project/file.ts", editor: "file-manager", reveal: true },
+    });
   });
 });
 

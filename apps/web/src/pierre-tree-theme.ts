@@ -3,9 +3,9 @@ import type { CSSProperties } from "react";
 export const PIERRE_TREE_UNSAFE_CSS = `
   :host {
     --trees-bg-override: transparent;
-    --trees-selected-bg-override: color-mix(in srgb, currentColor 12%, transparent);
-    --trees-hover-bg-override: color-mix(in srgb, currentColor 7%, transparent);
-    --trees-border-color-override: color-mix(in srgb, currentColor 14%, transparent);
+    --trees-selected-bg-override: var(--sidebar-row-active);
+    --trees-hover-bg-override: var(--sidebar-row-hover);
+    --trees-border-color-override: var(--sidebar-border);
     --trees-font-family-override: var(--font-sans);
     --trees-font-size-override: 0.75rem;
   }
@@ -22,6 +22,6 @@ export const PIERRE_TREE_UNSAFE_CSS = `
 export function pierreTreeStyle(colorScheme: "light" | "dark"): CSSProperties {
   return {
     colorScheme,
-    ["--trees-fg-override" as string]: "var(--contrast-foreground)",
+    ["--trees-fg-override" as string]: "var(--contrast-sidebar-foreground)",
   };
 }

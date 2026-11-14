@@ -32,12 +32,15 @@ import { ThreadDetailsItemsMenuItems } from "./ThreadDetailsItemsMenu";
 import { resolveThreadDetailsVisibility, THREAD_DETAILS_ITEMS } from "./threadDetailsItems";
 import { useClientSettings } from "../../hooks/useSettings";
 import { cn } from "../../lib/utils";
-import { SlidersHorizontalIcon } from "lucide-react";
+import { SlidersHorizontalIcon, XIcon } from "lucide-react";
 import { ThreadDetailsControl } from "./ThreadDetailsControl";
 import {
   THREAD_DETAILS_PANEL_ICON_CLASS,
   THREAD_DETAILS_PANEL_LABEL_CLASS,
 } from "./threadDetailsPanelStyles";
+import { Button } from "../ui/button";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
+import { useRightPanelStore } from "../../rightPanelStore";
 import { Menu, MenuPopup } from "../ui/menu";
 
 const GitActionsControl = memo(BaseGitActionsControl);
@@ -46,6 +49,8 @@ interface ThreadDetailsPanelProps extends Pick<
   ComponentProps<typeof ThreadDetailsCard>,
   "anchor" | "handle"
 > {
+  workspace?: boolean;
+  active?: boolean;
   forceNewWorktree?: boolean;
   environmentId: EnvironmentId;
   threadId: ThreadId;
@@ -125,6 +130,8 @@ export function ThreadDetailsPanel(props: ThreadDetailsPanelProps) {
       threadRef={{ environmentId: props.environmentId, threadId: props.threadId }}
       anchor={props.anchor}
       handle={props.handle}
+      workspace={props.workspace ?? false}
+      active={props.active ?? true}
       contentKey={THREAD_DETAILS_ITEMS.filter((item) => visible[item.id])
         .map((item) => item.id)
         .join(",")}
@@ -161,13 +168,53 @@ export function ThreadDetailsPanel(props: ThreadDetailsPanelProps) {
         };
         return (
           <>
+            {props.workspace ? (
+              <div className="flex items-start gap-3 border-b border-border/65 px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <h2 className="truncate text-sm font-medium">
+                    {props.activeProjectName ?? "Workspace"}
+                  </h2>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={<p className="mt-1 truncate text-xs text-muted-foreground" />}
+                    >
+                      {props.gitCwd ?? "Workspace controls"}
+                    </TooltipTrigger>
+                    <TooltipPopup>{props.gitCwd ?? "Workspace controls"}</TooltipPopup>
+                  </Tooltip>
+                </div>
+                <Button
+                  variant="ghost-muted"
+                  size="icon-xs"
+                  aria-label="Customize workspace controls"
+                  onClick={(event) => {
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    setMenuPosition({ x: rect.left, y: rect.bottom });
+                  }}
+                >
+                  <SlidersHorizontalIcon className="size-3.5" />
+                </Button>
+                <Button
+                  variant="ghost-muted"
+                  size="icon-xs"
+                  aria-label="Close workspace controls"
+                  onClick={() =>
+                    useRightPanelStore
+                      .getState()
+                      .setThreadPanelOpen(activeThreadRef, "popover", false)
+                  }
+                >
+                  <XIcon className="size-3.5" />
+                </Button>
+              </div>
+            ) : null}
             <div className="group/details-items">
               {show.environment || show.openIn || show.scripts ? (
                 <ThreadDetailsSection
                   headingId="thread-details-workspace-heading"
                   title="Workspace"
                   separated={false}
-                  showHeading={false}
+                  showHeading={props.workspace ?? false}
                 >
                   <div className="flex flex-col">
                     {show.environment ? (
@@ -216,7 +263,7 @@ export function ThreadDetailsPanel(props: ThreadDetailsPanelProps) {
                 <ThreadDetailsSection
                   headingId="thread-details-version-control-heading"
                   title="Version Control"
-                  showHeading={false}
+                  showHeading={props.workspace ?? false}
                   separated={density === "full"}
                 >
                   <div className="flex flex-col">
@@ -258,7 +305,9 @@ export function ThreadDetailsPanel(props: ThreadDetailsPanelProps) {
                 />
               ) : null}
 
-              {visible.usage ? <ThreadDetailsUsage {...props.usage} /> : null}
+              {visible.usage ? (
+                <ThreadDetailsUsage {...props.usage} showHeading={props.workspace ?? false} />
+              ) : null}
 
               {visible.context && props.usage.contextWindow ? (
                 <ThreadDetailsContext usage={props.usage.contextWindow} />

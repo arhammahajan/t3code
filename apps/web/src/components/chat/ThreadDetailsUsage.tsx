@@ -44,7 +44,8 @@ export function ThreadDetailsUsage({
   providerInstanceId,
   providers,
   sources,
-}: Omit<ThreadDetailsUsageInput, "contextWindow">) {
+  showHeading = false,
+}: Omit<ThreadDetailsUsageInput, "contextWindow"> & { showHeading?: boolean }) {
   const nowMinute = useNowMinute();
   const now = Date.parse(`${nowMinute}:00Z`);
   const report =
@@ -62,8 +63,8 @@ export function ThreadDetailsUsage({
   return (
     <ThreadDetailsSection
       headingId="thread-details-usage-heading"
-      title="Usage limits"
-      showHeading={false}
+      title={showHeading ? "Usage remaining" : "Usage limits"}
+      showHeading={showHeading}
     >
       <div className="grid grid-cols-[auto_minmax(3rem,1fr)_auto] gap-x-3 text-xs">
         {notice ? (

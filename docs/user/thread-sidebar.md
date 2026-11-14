@@ -57,6 +57,30 @@ in a new thread's model picker to add or remove them. A regular click returns to
 single model. Choose a base branch and send. Each selection starts a separate thread
 and worktree while you stay in the new thread composer. This requires a Git project.
 
+## Switch between open threads and files
+
+On web and desktop, chats, files, terminals, changes, browser tabs, devices, and pull
+requests open in the same workspace tab bar. Closing a chat tab keeps its thread and
+running agent. Use the **Open workspace tab** menu to open another kind of tab.
+The Files sidebar follows the project or worktree of the focused tab, so files opened
+from it belong to that workspace.
+
+Open **Workspace controls** from any tab to switch environments or worktrees, open
+in an external editor or file manager, run project scripts, manage Git changes, and
+check usage. The panel follows the focused tab's workspace. Use **Customize workspace
+controls** to choose which sections appear.
+
+Use **Split editor right** or **Split editor down** to show tabs alongside each other.
+Drag tabs to reorder them or move them between groups. Drag the divider to resize a
+split, or double-click it to restore equal sizes. **Join editor group** brings its
+tabs back into a neighboring group. Your tabs and split layout are restored on reload.
+
+Text files open in the code editor with find and replace, multiple cursors, and undo.
+Changes save automatically to the connected environment. Use the gutter **+**, the editor context menu, or **⌘/Ctrl+Alt+M** to comment on a
+line or selection without leaving the editor. Comments are attached to your next
+message and follow their lines as you edit. Files without write access stay
+read-only.
+
 ## Pin and reorder threads
 
 Pin a thread from its menu to keep it above your active work.

@@ -13,7 +13,13 @@ import { ChevronsDownUp, ChevronsUpDown } from "lucide";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "~/components/ui/button";
-import { InputGroup, InputGroupInput } from "~/components/ui/input-group";
+import { SidebarInput } from "~/components/ui/sidebar";
+import {
+  WorkspaceDockHeader,
+  WorkspaceDockSearch,
+  WorkspaceDockAction,
+} from "../workspace/WorkspaceDockChrome";
+import { Folder, X } from "lucide-react";
 import { MorphIcon } from "~/components/MorphIcon";
 import { toastManager } from "~/components/ui/toast";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
@@ -36,6 +42,7 @@ import { useDirectoryEntries } from "./useDirectoryEntries";
 import { useProjectPathSearch } from "~/state/queries";
 
 interface FileBrowserPanelProps {
+  windowTitlebar?: boolean;
   environmentId: EnvironmentId;
   cwd: string;
   projectName: string;
@@ -47,6 +54,7 @@ interface FileBrowserPanelProps {
   hostFolder?: boolean;
   onRefreshSelectedFile?: () => void;
   workspaceMutationId: string | null;
+  onClose?: (() => void) | undefined;
 }
 
 function treePath(entry: ProjectEntry): string {
@@ -55,22 +63,13 @@ function treePath(entry: ProjectEntry): string {
 
 function RefreshFilesButton(props: { isPending: boolean; onRefresh: () => void }) {
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            aria-label="Refresh workspace files"
-            onClick={props.onRefresh}
-          />
-        }
-      >
-        <RefreshIcon refreshing={props.isPending} />
-      </TooltipTrigger>
-      <TooltipPopup>{props.isPending ? "Refreshing…" : "Refresh files"}</TooltipPopup>
-    </Tooltip>
+    <WorkspaceDockAction
+      label="Refresh workspace files"
+      tooltip={props.isPending ? "Refreshing…" : "Refresh files"}
+      onClick={props.onRefresh}
+    >
+      <RefreshIcon refreshing={props.isPending} />
+    </WorkspaceDockAction>
   );
 }
 
@@ -82,11 +81,11 @@ function FileSearchField(props: {
   value: string;
 }) {
   return (
-    <InputGroup variant="ghost" className="h-7 min-w-0 flex-1">
-      <InputGroupInput
+    <WorkspaceDockSearch>
+      <SidebarInput
+        nativeInput
         type="search"
         name={props.name}
-        size="sm"
         value={props.value}
         aria-label={props.ariaLabel}
         placeholder="Search files"
@@ -99,7 +98,7 @@ function FileSearchField(props: {
           event.currentTarget.blur();
         }}
       />
-    </InputGroup>
+    </WorkspaceDockSearch>
   );
 }
 
@@ -143,6 +142,8 @@ export default function FileBrowserPanel({
   onRefreshSelectedFile,
   workspaceMutationId,
   hostFolder = false,
+  windowTitlebar = false,
+  onClose,
 }: FileBrowserPanelProps) {
   const panelPath = (relativePath: string) =>
     hostFolder ? joinHostPath(cwd, relativePath) : relativePath;
@@ -267,7 +268,7 @@ export default function FileBrowserPanel({
       },
     },
     dragAndDrop: { canDrop: () => false },
-    density: "compact",
+    density: "default",
     fileTreeSearchMode: "hide-non-matches",
     flattenEmptyDirectories: true,
     initialExpansion: "closed",
@@ -294,7 +295,7 @@ export default function FileBrowserPanel({
         : null,
     search: false,
     onSearchChange: (value) => setQuery(value ?? ""),
-    unsafeCSS: PIERRE_TREE_UNSAFE_CSS,
+    unsafeCSS: `${PIERRE_TREE_UNSAFE_CSS} :host { --trees-font-size-override: var(--text-sm); }`,
   });
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- makes the Pierre tree model re-render row decorations when loading directories change
   useEffect(() => {
@@ -474,7 +475,7 @@ export default function FileBrowserPanel({
 
   return (
     <div
-      className="flex min-h-0 flex-1 flex-col bg-background"
+      className="flex min-h-0 min-w-0 flex-1 flex-col bg-sidebar surface-grain text-sidebar-foreground"
       data-file-browser-panel={`${environmentId}:${cwd}`}
       // Capture runs before the tree's shadow-internal row handler opens the menu.
       onContextMenuCapture={(event) => {
@@ -484,26 +485,16 @@ export default function FileBrowserPanel({
       onDragStartCapture={(event) => dragMention.handleDragStart(event.nativeEvent)}
       onDragEnd={() => dragMention.handleDragEnd((path) => model.getItem(path)?.deselect())}
     >
-      <div
-        className="flex h-10 min-h-10 shrink-0 items-center gap-1 border-b border-border/60 bg-background px-2 in-data-[preview-panel-mode=inline]:mb-1 in-data-[preview-panel-mode=inline]:h-9 in-data-[preview-panel-mode=inline]:min-h-9 in-data-[preview-panel-mode=inline]:border-b-transparent"
-        data-surface-subheader
-      >
+      <WorkspaceDockHeader label="Files" windowTitlebar={windowTitlebar}>
         <RefreshFilesButton isPending={isPending} onRefresh={handleRefresh} />
-        <FileSearchField
-          name="project-files-search"
-          ariaLabel={`Search ${projectName} files`}
-          value={search.value}
-          onValueChange={handleSearchValueChange}
-          onClose={closeSearch}
-        />
         {directoryPaths.length > 0 && !hostFolder ? (
           <Tooltip>
             <TooltipTrigger
               render={
                 <Button
                   type="button"
-                  size="icon-xs"
-                  variant="ghost"
+                  size="icon-sm"
+                  variant="ghost-muted"
                   aria-label={
                     expandAll || allDirectoriesExpanded
                       ? "Collapse all folders"
@@ -523,6 +514,24 @@ export default function FileBrowserPanel({
             </TooltipPopup>
           </Tooltip>
         ) : null}
+        {onClose ? (
+          <WorkspaceDockAction label="Hide files sidebar" onClick={onClose}>
+            <X className="size-3.5" />
+          </WorkspaceDockAction>
+        ) : null}
+      </WorkspaceDockHeader>
+      <div className="px-2 py-1">
+        <FileSearchField
+          name="project-files-search"
+          ariaLabel={`Search ${projectName} files`}
+          value={search.value}
+          onValueChange={handleSearchValueChange}
+          onClose={closeSearch}
+        />
+      </div>
+      <div className="flex h-8 shrink-0 items-center gap-2 px-3 text-xs font-medium text-sidebar-muted-foreground">
+        <Folder className="size-3.5 shrink-0" />
+        <span className="truncate">{projectName}</span>
       </div>
       {error || pathSearch.error ? (
         <button

@@ -1228,10 +1228,9 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
   }
 }
 
-/* Keep both sidebar implementations (default and legacy) on the same quiet
-   zinc hierarchy: zinc-50 navigation, zinc-25 hover, and white selected/raised
-   surfaces. */
-[data-app-sidebar] {
+/* Navigation docks share the same surface, selection, and contrast palette. */
+[data-app-sidebar],
+[data-workspace-dock] {
   --background: var(--color-zinc-25);
   --foreground: var(--color-zinc-900);
   --card: var(--color-white);
@@ -1560,7 +1559,7 @@ html[data-theme-id="t3-chat"] {
   }
 }
 
-html[data-theme-id] [data-app-sidebar] {
+html[data-theme-id] :is([data-app-sidebar], [data-workspace-dock]) {
   --background: var(--app-theme-canvas);
   --foreground: var(--app-theme-text);
   --card: var(--app-theme-surface);
@@ -1590,7 +1589,7 @@ html[data-theme-id] [data-app-sidebar] {
 
 /* T3 Chat's panel divider is deliberately pink, and its resize affordance
    keeps that color while hovered. Do not neutralize this branded edge. */
-html[data-theme-id="t3-chat"] [data-app-sidebar] {
+html[data-theme-id="t3-chat"] :is([data-app-sidebar], [data-workspace-dock]) {
   @variant dark {
     border-color: var(--contrast-sidebar-border);
   }
@@ -1598,7 +1597,8 @@ html[data-theme-id="t3-chat"] [data-app-sidebar] {
 
 /* Recompute contrast wherever a subtree owns its own semantic color palette. */
 :root,
-[data-app-sidebar] {
+[data-app-sidebar],
+[data-workspace-dock] {
   --contrast-toolbar-foreground: color-mix(
     in oklab,
     color-mix(
@@ -2587,4 +2587,23 @@ code {
 [data-workspace-keyboard-focus]:focus {
   outline: 2px solid var(--ring);
   outline-offset: -2px;
+}
+
+.monaco-review-add,
+.monaco-review-comment {
+  cursor: pointer;
+  color: var(--primary);
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+.monaco-review-add::before {
+  content: "+";
+  font-size: 18px;
+}
+.monaco-review-comment::before {
+  font-size: 14px;
+}
+.monaco-review-range {
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
 }

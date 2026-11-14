@@ -6,7 +6,7 @@ import { useRenderedAppearance } from "~/hooks/useTheme";
 import { resolveDiffThemeName } from "~/lib/diffRendering";
 import { PREFERRED_HIGHLIGHTER } from "~/lib/syntaxHighlighting";
 
-import { FILE_LINK_REVEAL_UNSAFE_CSS } from "./fileSurfaceChrome";
+import { FILE_PREVIEW_UNSAFE_CSS } from "./fileSurfaceChrome";
 
 export default function ReadOnlySourcePreview(props: {
   readonly name: string;
@@ -38,7 +38,7 @@ export default function ReadOnlySourcePreview(props: {
             theme: resolveDiffThemeName(resolvedTheme),
             preferredHighlighter: PREFERRED_HIGHLIGHTER,
             themeType: resolvedTheme,
-            unsafeCSS: FILE_LINK_REVEAL_UNSAFE_CSS,
+            unsafeCSS: FILE_PREVIEW_UNSAFE_CSS,
             ...(props.onPostRender ? { onPostRender: props.onPostRender } : {}),
           }}
           className="min-h-full"

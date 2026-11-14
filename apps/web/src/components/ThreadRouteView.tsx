@@ -54,9 +54,11 @@ function useOpenThreadFamily(threadRef: ScopedThreadRef | null, missing: boolean
 export function ThreadRouteView({
   target,
   background = false,
+  workspace = false,
 }: {
   target: ThreadRouteTarget;
   background?: boolean;
+  workspace?: boolean;
 }) {
   const navigate = useNavigate();
   const draftId = target.kind === "draft" ? target.draftId : null;
@@ -148,11 +150,19 @@ export function ThreadRouteView({
     if (renderState === "missing") {
       const { clearPendingFileDropsForThread } = useSidebarPendingFileDropStore.getState();
       clearPendingFileDropsForThread(target.threadRef);
-      if (environmentHasAnyThreads && !background) {
+      if (environmentHasAnyThreads && !background && !workspace) {
         void navigate({ to: "/", replace: true });
       }
     }
-  }, [background, bootstrapComplete, environmentHasAnyThreads, navigate, renderState, target]);
+  }, [
+    background,
+    bootstrapComplete,
+    environmentHasAnyThreads,
+    navigate,
+    renderState,
+    target,
+    workspace,
+  ]);
 
   let view: React.ReactNode = null;
   let redirect: React.ReactNode = null;
@@ -223,6 +233,21 @@ export function ThreadRouteView({
       />
     );
   }
+
+  if (workspace)
+    return (
+      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
+        <BackgroundThreadContext value={background}>
+          {view ?? (
+            <div className="m-auto p-6 text-sm text-muted-foreground">
+              {renderState === "loading"
+                ? "Loading thread…"
+                : "This thread is unavailable. Close this tab or open another thread."}
+            </div>
+          )}
+        </BackgroundThreadContext>
+      </div>
+    );
 
   return (
     <SidebarInset
